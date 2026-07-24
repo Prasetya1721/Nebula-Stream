@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import HeroBanner from './components/HeroBanner';
 import ContinueWatching from './components/ContinueWatching';
@@ -10,13 +10,24 @@ import VideoPlayerModal from './components/VideoPlayerModal';
 import MovieDetailsModal from './components/MovieDetailsModal';
 import SearchModal from './components/SearchModal';
 import ProfileModal from './components/ProfileModal';
+import CmsDashboard from './components/CmsDashboard';
 
-import { HERO_FEATURED, CONTINUE_WATCHING, NEW_RELEASES, PROFILES_DATA } from './data/moviesData';
-import { Search, Film, Bookmark, Sparkles, CheckCircle } from 'lucide-react';
+import { 
+  PROFILES_DATA, 
+  CONTINUE_WATCHING, 
+  getStoredMoviesData, 
+  getStoredLiveChannels, 
+  getStoredHeroFeatured, 
+  saveStoredMoviesData, 
+  saveStoredLiveChannels, 
+  saveStoredHeroFeatured, 
+  resetAllCmsData 
+} from './data/moviesData';
+import { Search, Film, Bookmark, LayoutDashboard, CheckCircle } from 'lucide-react';
 
 export default function App() {
   const [activeNavTab, setActiveNavTab] = useState('home');
-  const [headerTab, setHeaderTab] = useState('Movies'); // 'Movies' | 'Watch'
+  const [headerTab, setHeaderTab] = useState('Watch'); // 'Movies' | 'Watch' | 'CMS'
   const [selectedCategory, setSelectedCategory] = useState('All');
   
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -27,6 +38,40 @@ export default function App() {
   const [detailsMovie, setDetailsMovie] = useState(null);
   const [watchlist, setWatchlist] = useState(['john-wick-4', 'money-heist']);
   const [toastMessage, setToastMessage] = useState('');
+
+  // CMS State initialized from localStorage
+  const [moviesList, setMoviesList] = useState(getStoredMoviesData());
+  const [liveChannelsList, setLiveChannelsList] = useState(getStoredLiveChannels());
+  const [heroFeatured, setHeroFeatured] = useState(getStoredHeroFeatured());
+
+  // Save changes to localStorage
+  const updateMoviesList = (newList) => {
+    setMoviesList(newList);
+    saveStoredMoviesData(newList);
+    triggerGlobalToast('Catalog titles updated in CMS!');
+  };
+
+  const updateLiveChannelsList = (newList) => {
+    setLiveChannelsList(newList);
+    saveStoredLiveChannels(newList);
+    triggerGlobalToast('Live Channels updated in CMS!');
+  };
+
+  const updateHeroFeatured = (newHero) => {
+    setHeroFeatured(newHero);
+    saveStoredHeroFeatured(newHero);
+    triggerGlobalToast(`Hero Featured banner set to "${newHero.title}"!`);
+  };
+
+  const handleResetCmsData = () => {
+    if (window.confirm('Reset all catalog, live channels, and hero banner to default datasets?')) {
+      resetAllCmsData();
+      setMoviesList(getStoredMoviesData());
+      setLiveChannelsList(getStoredLiveChannels());
+      setHeroFeatured(getStoredHeroFeatured());
+      triggerGlobalToast('Reset to original default dataset!');
+    }
+  };
 
   const closeAllModals = () => {
     setIsSearchOpen(false);
@@ -42,6 +87,8 @@ export default function App() {
       setHeaderTab('Movies');
     } else if (tabId === 'home') {
       setHeaderTab('Watch');
+    } else if (tabId === 'cms') {
+      setHeaderTab('CMS');
     }
   };
 
@@ -62,8 +109,8 @@ export default function App() {
     setTimeout(() => setToastMessage(''), 2500);
   };
 
-  // Category filter
-  const filteredMovies = NEW_RELEASES.filter((movie) => {
+  // Category filter based on dynamic CMS moviesList
+  const filteredMovies = moviesList.filter((movie) => {
     if (selectedCategory === 'All') return true;
     if (selectedCategory === 'Originals') return movie.isOriginal;
     if (selectedCategory === 'Movies') return movie.type === 'Movies';
@@ -102,16 +149,23 @@ export default function App() {
         <header className="top-header">
           <div className="header-tabs">
             <button
+              className={`header-tab-btn ${headerTab === 'Watch' && activeNavTab === 'home' ? 'active' : ''}`}
+              onClick={() => handleNavChange('home')}
+            >
+              Watch Home
+            </button>
+            <button
               className={`header-tab-btn ${headerTab === 'Movies' || activeNavTab === 'movies' ? 'active' : ''}`}
               onClick={() => handleNavChange('movies')}
             >
               Movies & Series
             </button>
             <button
-              className={`header-tab-btn ${headerTab === 'Watch' && activeNavTab === 'home' ? 'active' : ''}`}
-              onClick={() => handleNavChange('home')}
+              className={`header-tab-btn ${headerTab === 'CMS' || activeNavTab === 'cms' ? 'active' : ''}`}
+              onClick={() => handleNavChange('cms')}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
             >
-              Watch Home
+              <LayoutDashboard size={16} /> CMS Admin
             </button>
           </div>
 
@@ -128,7 +182,18 @@ export default function App() {
         </header>
 
         {/* Dynamic Views */}
-        {activeNavTab === 'movies' ? (
+        {activeNavTab === 'cms' ? (
+          <CmsDashboard
+            movies={moviesList}
+            setMovies={updateMoviesList}
+            liveChannels={liveChannelsList}
+            setLiveChannels={updateLiveChannelsList}
+            heroFeatured={heroFeatured}
+            setHeroFeatured={updateHeroFeatured}
+            onResetData={handleResetCmsData}
+            onPlayMovie={(movie) => setPlayingMovie(movie)}
+          />
+        ) : activeNavTab === 'movies' ? (
           <MoviesSeriesSection
             onPlayMovie={(movie) => setPlayingMovie(movie)}
             onOpenDetails={(movie) => setDetailsMovie(movie)}
@@ -150,7 +215,7 @@ export default function App() {
               </div>
             ) : (
               <MovieGrid
-                movies={NEW_RELEASES.filter((m) => watchlist.includes(m.id))}
+                movies={moviesList.filter((m) => watchlist.includes(m.id))}
                 onPlayMovie={(movie) => setPlayingMovie(movie)}
                 onOpenDetails={(movie) => setDetailsMovie(movie)}
                 watchlist={watchlist}
@@ -162,7 +227,7 @@ export default function App() {
           <>
             {/* Featured Hero Banner */}
             <HeroBanner
-              movie={HERO_FEATURED}
+              movie={heroFeatured}
               onPlayMovie={(movie) => setPlayingMovie(movie)}
               onOpenDetails={(movie) => setDetailsMovie(movie)}
             />

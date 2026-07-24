@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Search, Film, Tv, Bookmark, User, Settings } from 'lucide-react';
+import { Home, Search, Film, Tv, Bookmark, LayoutDashboard } from 'lucide-react';
 
 export default function Sidebar({ activeTab, setActiveTab, onOpenSearch, onOpenProfile, activeProfile }) {
   const navItems = [
@@ -8,6 +8,7 @@ export default function Sidebar({ activeTab, setActiveTab, onOpenSearch, onOpenP
     { id: 'movies', icon: Film, label: 'Movies & Series' },
     { id: 'livetv', icon: Tv, label: 'Live TV' },
     { id: 'watchlist', icon: Bookmark, label: 'My Watchlist' },
+    { id: 'cms', icon: LayoutDashboard, label: 'CMS Admin' },
   ];
 
   return (

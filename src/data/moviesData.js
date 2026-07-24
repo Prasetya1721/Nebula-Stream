@@ -253,3 +253,65 @@ export const PROFILES_DATA = [
   { id: 'p3', name: 'Anime Vault', avatarBg: 'linear-gradient(135deg, #06b6d4, #3b82f6)', isKids: false, badge: 'Otaku' }
 ];
 
+/* CMS Persistence Helpers */
+export const getStoredMoviesData = () => {
+  try {
+    const saved = localStorage.getItem('nebulax_cms_movies');
+    if (saved) return JSON.parse(saved);
+  } catch (e) {
+    console.error('Failed to load CMS movies from localStorage', e);
+  }
+  return NEW_RELEASES;
+};
+
+export const getStoredLiveChannels = () => {
+  try {
+    const saved = localStorage.getItem('nebulax_cms_live_channels');
+    if (saved) return JSON.parse(saved);
+  } catch (e) {
+    console.error('Failed to load CMS live channels from localStorage', e);
+  }
+  return LIVE_TV_CHANNELS;
+};
+
+export const getStoredHeroFeatured = () => {
+  try {
+    const saved = localStorage.getItem('nebulax_cms_hero_featured');
+    if (saved) return JSON.parse(saved);
+  } catch (e) {
+    console.error('Failed to load CMS hero featured from localStorage', e);
+  }
+  return HERO_FEATURED;
+};
+
+export const saveStoredMoviesData = (data) => {
+  try {
+    localStorage.setItem('nebulax_cms_movies', JSON.stringify(data));
+  } catch (e) {
+    console.error('Failed to save CMS movies', e);
+  }
+};
+
+export const saveStoredLiveChannels = (data) => {
+  try {
+    localStorage.setItem('nebulax_cms_live_channels', JSON.stringify(data));
+  } catch (e) {
+    console.error('Failed to save CMS live channels', e);
+  }
+};
+
+export const saveStoredHeroFeatured = (data) => {
+  try {
+    localStorage.setItem('nebulax_cms_hero_featured', JSON.stringify(data));
+  } catch (e) {
+    console.error('Failed to save CMS hero featured', e);
+  }
+};
+
+export const resetAllCmsData = () => {
+  localStorage.removeItem('nebulax_cms_movies');
+  localStorage.removeItem('nebulax_cms_live_channels');
+  localStorage.removeItem('nebulax_cms_hero_featured');
+};
+
+
